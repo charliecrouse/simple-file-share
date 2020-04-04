@@ -8,7 +8,7 @@ class Application {
   app!: express.Application;
   port!: number;
 
-  constructor(port = 5000) {
+  constructor(port: number) {
     this.app = express();
     this.port = port;
 
@@ -29,14 +29,6 @@ class Application {
 }
 
 export class ApplicationFactory {
-  static instance: Application;
-
-  static getInstance = (): Application => {
-    if (!ApplicationFactory.instance) {
-      const port = parseInt(process.env.PORT || '5000');
-      ApplicationFactory.instance = new Application(port);
-    }
-
-    return ApplicationFactory.instance;
-  };
+  static readonly port: number = parseInt(process.env.PORT || '5000');
+  static readonly instance: Application = new Application(ApplicationFactory.port);
 }
