@@ -1,0 +1,10 @@
+{
+  "name": "simple-file-share",
+  "version": "1.0.0",
+  "description": "Backend for Simple File Share",
+  "main": "src/index.ts",
+  "repository": "git@github.com:charliecrouse/simple-file-share.git",
+  "author": "Charlie C. <charlietcrouse@icloud.com>",
+  "license": "MIT",
+  "private": false
+}
