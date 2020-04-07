@@ -4,6 +4,8 @@ import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
 
+import { router } from '../routes';
+
 class Application {
   app!: express.Application;
   port!: number;
@@ -12,6 +14,7 @@ class Application {
     this.app = express();
     this.port = port;
 
+    this.app.use(router);
     this.app.use(bodyparser.json());
     this.app.use(bodyparser.urlencoded({ extended: false }));
     this.app.use(compression());
