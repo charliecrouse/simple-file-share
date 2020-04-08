@@ -1,4 +1,4 @@
-import { Table, Model, Column, IsUUID, PrimaryKey } from 'sequelize-typescript';
+import { Column, IsUUID, Model, PrimaryKey, Table } from 'sequelize-typescript';
 
 export interface FileShape {
   id: string;
