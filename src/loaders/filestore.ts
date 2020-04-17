@@ -1,10 +1,9 @@
 import * as Minio from 'minio';
 
-class Filestore {
-  static readonly BUCKET: string = 'simple-file-share';
-  static readonly FILES_BUCKET: string = Filestore.BUCKET + '/files';
-  static readonly REGION: string = 'us-east-1';
+import { ROOT_BUCKET } from '../utils/filestore';
 
+class Filestore {
+  static readonly REGION: string = 'us-east-1';
   filestore: Minio.Client;
 
   constructor(endPoint: string, port: number, accessKey: string, secretKey: string) {
@@ -18,11 +17,11 @@ class Filestore {
   }
 
   initialize = async (): Promise<void> => {
-    this.filestore.bucketExists(Filestore.BUCKET, (err, exists) => {
+    this.filestore.bucketExists(ROOT_BUCKET, (err, exists) => {
       if (err) return Promise.reject(err);
       if (exists) return Promise.resolve();
 
-      this.filestore.makeBucket(Filestore.BUCKET, Filestore.REGION, (err) => {
+      this.filestore.makeBucket(ROOT_BUCKET, Filestore.REGION, (err) => {
         if (err) return Promise.reject(err);
         return Promise.resolve();
       });

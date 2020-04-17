@@ -1,3 +1,5 @@
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV || 'development'}` });
+
 import { ApplicationFactory, DatabaseFactory, FilestoreFactory } from './loaders';
 
 async function main(): Promise<void> {
