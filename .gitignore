@@ -106,5 +106,8 @@ dist
 # Typescript Output
 dist/
 
-# Babel Outpu
+# Babel Output
 build/
+
+# Production Environment
+.env.production
