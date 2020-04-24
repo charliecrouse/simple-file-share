@@ -1,43 +1,55 @@
-import * as Minio from 'minio';
+import { S3 } from 'aws-sdk';
 
 import { ROOT_BUCKET } from '../utils/filestore';
 
 class Filestore {
-  static readonly REGION: string = 'us-east-1';
-  filestore: Minio.Client;
+  filestore: S3;
 
-  constructor(endPoint: string, port: number, accessKey: string, secretKey: string) {
-    this.filestore = new Minio.Client({
-      endPoint,
-      port,
-      accessKey,
-      secretKey,
-      useSSL: false,
+  constructor(endpoint: string, accessKeyId: string, secretAccessKey: string) {
+    this.filestore = new S3({
+      endpoint,
+      accessKeyId,
+      secretAccessKey,
+      s3ForcePathStyle: true,
     });
   }
 
   initialize = async (): Promise<void> => {
-    this.filestore.bucketExists(ROOT_BUCKET, (err, exists) => {
-      if (err) return Promise.reject(err);
-      if (exists) return Promise.resolve();
+    await this.createBucket(ROOT_BUCKET);
+  };
 
-      this.filestore.makeBucket(ROOT_BUCKET, Filestore.REGION, (err) => {
-        if (err) return Promise.reject(err);
-        return Promise.resolve();
+  checkBucketExists = (bucket: string): Promise<boolean> => {
+    return new Promise((resolve, reject) => {
+      const options = { Bucket: bucket };
+      this.filestore.headBucket(options, (err) => {
+        if (!err) return resolve(true);
+        if (err.statusCode == 404) return resolve(false);
+        reject(err);
+      });
+    });
+  };
+
+  createBucket = (bucket: string): Promise<void> => {
+    return new Promise(async (resolve, reject) => {
+      const exists = await this.checkBucketExists(bucket);
+      if (exists) return resolve();
+
+      this.filestore.createBucket({ Bucket: bucket }, (err) => {
+        if (err) return reject(err);
+        resolve();
       });
     });
   };
 }
 
 export class FilestoreFactory {
-  static readonly endPoint: string = process.env.FILESTORE_URL || 'localhost';
-  static readonly port: number = parseInt(process.env.FILESTORE_PORT || '9000');
-  static readonly accessKey: string = process.env.FILESTORE_USERNAME || 'minio';
-  static readonly secretKey: string = process.env.FILESTORE_PASSWORD || 'supersecret';
+  static readonly FILESTORE_ENDPOINT = process.env.FILESTORE_ENDPOINT || '';
+  static readonly FILESTORE_ACCESS_KEY = process.env.FILESTORE_ACCESS_KEY || '';
+  static readonly FILESTORE_SECRET_ACCESS_KEY = process.env.FILESTORE_SECRET_ACCESS_KEY || '';
+
   static readonly instance: Filestore = new Filestore(
-    FilestoreFactory.endPoint,
-    FilestoreFactory.port,
-    FilestoreFactory.accessKey,
-    FilestoreFactory.secretKey,
+    FilestoreFactory.FILESTORE_ENDPOINT,
+    FilestoreFactory.FILESTORE_ACCESS_KEY,
+    FilestoreFactory.FILESTORE_SECRET_ACCESS_KEY,
   );
 }

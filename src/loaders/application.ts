@@ -7,19 +7,29 @@ import morgan from 'morgan';
 import { router } from '../routes';
 
 class Application {
-  app!: express.Application;
-  port!: number;
+  app: express.Application;
+  port: number;
 
   constructor(port: number) {
     this.app = express();
     this.port = port;
 
+    this.app.use(cors());
     this.app.use(router);
+    this.app.use(bodyparser.text());
     this.app.use(bodyparser.json());
     this.app.use(bodyparser.urlencoded({ extended: false }));
     this.app.use(compression());
-    this.app.use(cors());
     this.app.use(morgan('dev'));
+
+    this.app.use(
+      (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+        return res
+          .status(400)
+          .json({ message: err.message || err })
+          .send();
+      },
+    );
 
     this.app.get('/healthcheck', (_req, res) => {
       res.status(200).send();
