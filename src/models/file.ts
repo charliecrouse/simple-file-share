@@ -10,4 +10,7 @@ export class File extends Model implements FileShape {
   @PrimaryKey
   @Column
   id!: string;
+
+  @Column
+  size!: number;
 }

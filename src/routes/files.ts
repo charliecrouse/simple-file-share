@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 
-import { fileService } from '../services';
+import { fileService } from '../controllers';
 import { downloadFile, uploadFile } from '../utils/filestore';
 
 export async function createFile(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -11,11 +11,9 @@ export async function createFile(req: Request, res: Response, next: NextFunction
     const payload = {
       statusCode: 201,
       message: 'The given file is being stored.',
-      file: {
-        password,
-        iv,
-        ...file.toJSON(),
-      },
+      password,
+      iv,
+      file: file.toJSON(),
     };
 
     res.status(payload.statusCode).json(payload);

@@ -1,12 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import { File } from '../models';
 
-export async function createFile(): Promise<File> {
+export const createFile = async (): Promise<File> => {
   const file = new File({ id: uuid() });
   return await file.save();
-}
+};
 
-export async function findFileById(id: string): Promise<File> {
+export const findFileById = async (id: string): Promise<File> => {
   const file = await File.findByPk(id);
 
   if (!file) {
@@ -14,4 +14,10 @@ export async function findFileById(id: string): Promise<File> {
   }
 
   return file;
-}
+};
+
+export const setFileSize = async (id: string, size: number): Promise<void> => {
+  const file = await findFileById(id);
+  file.size = size;
+  await file.save();
+};
