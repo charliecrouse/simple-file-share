@@ -39,11 +39,7 @@ export const uploadFile = async (fileId: string, rs: Readable): Promise<Decipher
   return { password, iv };
 };
 
-export const downloadFile = async (
-  fileId: string,
-  data: DecipherData,
-  ws: Writable,
-): Promise<void> => {
+export const downloadFile = async (fileId: string, data: DecipherData, ws: Writable): Promise<void> => {
   const decipher = await createDecipher(data);
   const downloadStream = getDownloadStream(fileId);
   downloadStream.pipe(decipher).pipe(ws);

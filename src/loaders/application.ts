@@ -8,11 +8,10 @@ import { router } from '../routes';
 
 class Application {
   app: express.Application;
-  port: number;
 
   constructor(port: number) {
     this.app = express();
-    this.port = port;
+    this.app.set('port', port);
 
     this.app.use(cors());
     this.app.use(router);
@@ -22,14 +21,12 @@ class Application {
     this.app.use(compression());
     this.app.use(morgan('dev'));
 
-    this.app.use(
-      (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-        return res
-          .status(400)
-          .json({ message: err.message || err })
-          .send();
-      },
-    );
+    this.app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      return res
+        .status(400)
+        .json({ message: err.message || err })
+        .send();
+    });
 
     this.app.get('/healthcheck', (_req, res) => {
       res.status(200).send();
@@ -37,11 +34,11 @@ class Application {
   }
 
   start = async (): Promise<void> => {
-    await this.app.listen(this.port);
+    await this.app.listen(this.app.get('port'));
   };
 }
 
 export class ApplicationFactory {
-  static readonly port: number = parseInt(process.env.PORT || '5000');
-  static readonly instance: Application = new Application(ApplicationFactory.port);
+  static readonly APPLICATION_PORT: number = parseInt(process.env.PORT || '5000');
+  static readonly instance: Application = new Application(ApplicationFactory.APPLICATION_PORT);
 }

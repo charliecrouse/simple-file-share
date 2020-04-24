@@ -13,7 +13,7 @@ async function main(): Promise<void> {
 
   const application = ApplicationFactory.instance;
   await application.start();
-  console.log(`Application is listening on http://localhost:${application.port}`);
+  console.log(`Application is listening on http://localhost:${ApplicationFactory.APPLICATION_PORT}`);
 }
 
 if (!module.parent) {
