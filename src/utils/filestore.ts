@@ -2,7 +2,7 @@ import { S3 } from 'aws-sdk';
 import { Readable, Writable } from 'stream';
 
 import { FilestoreFactory, SocketFactory } from '../loaders';
-import { DecipherData, createCipher, createDecipher } from './crypto';
+import { createCipher, createDecipher, makeDecipherData, makeSecret } from './crypto';
 import { fileService } from '../controllers';
 
 export const ROOT_BUCKET = 'simple-file-share';
@@ -26,7 +26,7 @@ export const getDownloadStream = (fileId: string): Readable => {
   return FilestoreFactory.instance.filestore.getObject(options).createReadStream();
 };
 
-export const uploadFile = async (fileId: string, rs: Readable): Promise<DecipherData> => {
+export const uploadFile = async (fileId: string, rs: Readable): Promise<string> => {
   const { cipher, password, iv } = await createCipher();
 
   const uploadStream = getUploadStream(fileId, rs.pipe(cipher));
@@ -45,11 +45,16 @@ export const uploadFile = async (fileId: string, rs: Readable): Promise<Decipher
   });
   uploadStream.send();
 
-  return { password, iv };
+  return makeSecret({ password, iv });
 };
 
-export const downloadFile = async (fileId: string, data: DecipherData, ws: Writable): Promise<void> => {
-  const decipher = await createDecipher(data);
+export const downloadFile = async (fileId: string, secret: string, ws: Writable): Promise<void> => {
+  if (!secret) {
+    return Promise.reject(`Invalid secret "${secret}"!`);
+  }
+
+  const decipherData = makeDecipherData(secret);
+  const decipher = await createDecipher(decipherData);
   const downloadStream = getDownloadStream(fileId);
   downloadStream.pipe(decipher).pipe(ws);
 

@@ -2,8 +2,8 @@ import crypto from 'crypto';
 import { v4 as uuid } from 'uuid';
 
 export interface DecipherData {
-  iv: string;
   password: string;
+  iv: string;
 }
 
 export interface CipherData extends DecipherData {
@@ -12,11 +12,16 @@ export interface CipherData extends DecipherData {
 
 const ALGORITHM = 'aes-256-cbc';
 
-function generateDecipherData(): DecipherData {
-  const base: string = uuid().split('-').join('');
-  const password = base.slice(0, 16);
-  const iv = base.slice(16, 32);
+export function makeDecipherData(input?: string): DecipherData {
+  const secret: string = (input && input.split('-').join('')) || uuid().split('-').join('');
+  if (secret.length < 32) throw new Error(`Invalid secret ${secret}`);
+  const password = secret.slice(0, 16);
+  const iv = secret.slice(16, 32);
   return { password, iv };
+}
+
+export function makeSecret(data: DecipherData): string {
+  return `${data.password}-${data.iv}`;
 }
 
 async function getKey(password: string): Promise<Buffer> {
@@ -31,7 +36,7 @@ async function getKey(password: string): Promise<Buffer> {
 }
 
 export async function createCipher(): Promise<CipherData> {
-  const { password, iv } = generateDecipherData();
+  const { password, iv } = makeDecipherData();
   const key = await getKey(password);
   const cipher = crypto.createCipheriv(ALGORITHM, key, Buffer.from(iv));
   return { password, iv, cipher };
