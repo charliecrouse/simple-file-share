@@ -12,9 +12,22 @@ export interface CipherData extends DecipherData {
 
 const ALGORITHM = 'aes-256-cbc';
 
+export function validateSecret(secret: string): boolean {
+  if (!secret) return false;
+  if (secret.indexOf('-') === -1) return false;
+  const split = secret.split('-');
+  if (split.length < 2) return false;
+  if (split[0].length < 16) return false;
+  if (split[1].length < 16) return false;
+  return true;
+}
+
 export function makeDecipherData(input?: string): DecipherData {
+  if (input && !validateSecret(input)) {
+    throw new Error(`Invalid secret "${input}"!`);
+  }
+
   const secret: string = (input && input.split('-').join('')) || uuid().split('-').join('');
-  if (secret.length < 32) throw new Error(`Invalid secret ${secret}`);
   const password = secret.slice(0, 16);
   const iv = secret.slice(16, 32);
   return { password, iv };

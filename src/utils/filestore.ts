@@ -49,10 +49,6 @@ export const uploadFile = async (fileId: string, rs: Readable): Promise<string> 
 };
 
 export const downloadFile = async (fileId: string, secret: string, ws: Writable): Promise<void> => {
-  if (!secret) {
-    return Promise.reject(`Invalid secret "${secret}"!`);
-  }
-
   const decipherData = makeDecipherData(secret);
   const decipher = await createDecipher(decipherData);
   const downloadStream = getDownloadStream(fileId);
