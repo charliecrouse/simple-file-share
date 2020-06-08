@@ -14,9 +14,7 @@ class Database {
   }
 
   connect = async (): Promise<void> => {
-    await this.database.sync({
-      force: true,
-    });
+    await this.database.sync();
   };
 }
 

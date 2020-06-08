@@ -21,7 +21,9 @@ class Application {
     this.app.use(compression());
     this.app.use(morgan('dev'));
 
-    this.app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    this.app.use((err: Error, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+      if (res.headersSent) return next();
+
       return res
         .status(400)
         .json({ message: err.message || err })

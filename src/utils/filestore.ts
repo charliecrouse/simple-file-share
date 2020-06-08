@@ -2,7 +2,7 @@ import { S3 } from 'aws-sdk';
 import { Readable, Writable } from 'stream';
 
 import { FilestoreFactory, SocketFactory } from '../loaders';
-import { createCipher, createDecipher, makeDecipherData, makeSecret } from './crypto';
+import { Decrypter, Encrypter } from './crypto';
 import { fileService } from '../controllers';
 
 export const ROOT_BUCKET = 'simple-file-share';
@@ -27,9 +27,10 @@ export const getDownloadStream = (fileId: string): Readable => {
 };
 
 export const uploadFile = async (fileId: string, rs: Readable): Promise<string> => {
-  const { cipher, password, iv } = await createCipher();
+  const encrypter = new Encrypter();
+  await encrypter.ready;
 
-  const uploadStream = getUploadStream(fileId, rs.pipe(cipher));
+  const uploadStream = getUploadStream(fileId, rs.pipe(encrypter.stream));
 
   uploadStream.on('httpUploadProgress', async (progress) => {
     if (progress.loaded == progress.total) {
@@ -45,20 +46,21 @@ export const uploadFile = async (fileId: string, rs: Readable): Promise<string> 
   });
   uploadStream.send();
 
-  return makeSecret({ password, iv });
+  return encrypter.secret;
 };
 
 export const downloadFile = async (fileId: string, secret: string, ws: Writable): Promise<void> => {
-  const decipherData = makeDecipherData(secret);
-  const decipher = await createDecipher(decipherData);
+  const decrypter = new Decrypter(secret);
+  await decrypter.ready;
+
   const downloadStream = getDownloadStream(fileId);
-  downloadStream.pipe(decipher).pipe(ws);
+  downloadStream.pipe(decrypter.stream).pipe(ws);
 
   return new Promise((resolve, reject) => {
-    decipher.on('error', (err) => {
+    decrypter.stream.on('error', (err) => {
       SocketFactory.instance.emitter.emit(`file-download-error-${fileId}`);
       return reject(err);
     });
-    decipher.on('end', resolve);
+    decrypter.stream.on('end', resolve);
   });
 };

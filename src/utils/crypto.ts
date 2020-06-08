@@ -1,5 +1,6 @@
+import * as yup from 'yup';
 import crypto from 'crypto';
-import { v4 as uuid } from 'uuid';
+import { nanoid } from 'nanoid';
 
 export interface DecipherData {
   password: string;
@@ -11,52 +12,74 @@ export interface CipherData extends DecipherData {
 }
 
 const ALGORITHM = 'aes-256-cbc';
+const SECRET_SCHEMA = yup.string().required().length(32);
 
-export function validateSecret(secret: string): boolean {
-  if (!secret) return false;
-  if (secret.indexOf('-') === -1) return false;
-  const split = secret.split('-');
-  if (split.length < 2) return false;
-  if (split[0].length < 16) return false;
-  if (split[1].length < 16) return false;
-  return true;
-}
+export const createDecipherData = (): DecipherData => ({
+  password: nanoid(16),
+  iv: nanoid(16),
+});
 
-export function makeDecipherData(input?: string): DecipherData {
-  if (input && !validateSecret(input)) {
-    throw new Error(`Invalid secret "${input}"!`);
+export const secretToDecipherData = (secret: string): DecipherData => {
+  if (!SECRET_SCHEMA.isValidSync(secret)) {
+    throw new Error(`Invalid secret \"${secret}\"!`);
   }
 
-  const secret: string = (input && input.split('-').join('')) || uuid().split('-').join('');
   const password = secret.slice(0, 16);
   const iv = secret.slice(16, 32);
+
+  console;
+
   return { password, iv };
-}
+};
 
-export function makeSecret(data: DecipherData): string {
-  return `${data.password}-${data.iv}`;
-}
+export const decipherDataToSecret = (decipherData: DecipherData): string =>
+  `${decipherData.password}${decipherData.iv}`;
 
-async function getKey(password: string): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+export const getKey = async (password: string): Promise<Buffer> => {
+  return new Promise((res, rej) => {
     const salt = process.env.CRYPTO_SALT || 'salt';
 
     crypto.scrypt(password, salt, 32, (err, key) => {
-      if (err) return reject(err);
-      return resolve(key);
+      if (err) return rej(err);
+      return res(key);
     });
   });
+};
+
+export class Encrypter {
+  stream!: crypto.Cipher;
+  secret!: string;
+  ready: Promise<void>;
+
+  constructor() {
+    this.ready = new Promise(async (resolve, reject) => {
+      try {
+        const decipherData = createDecipherData();
+        this.secret = decipherDataToSecret(decipherData);
+        const key = await getKey(decipherData.password);
+        this.stream = crypto.createCipheriv(ALGORITHM, key, Buffer.from(decipherData.iv));
+        return resolve();
+      } catch (err) {
+        return reject(err);
+      }
+    });
+  }
 }
 
-export async function createCipher(): Promise<CipherData> {
-  const { password, iv } = makeDecipherData();
-  const key = await getKey(password);
-  const cipher = crypto.createCipheriv(ALGORITHM, key, Buffer.from(iv));
-  return { password, iv, cipher };
-}
+export class Decrypter {
+  stream!: crypto.Decipher;
+  ready: Promise<void>;
 
-export async function createDecipher(data: DecipherData): Promise<crypto.Decipher> {
-  const { password, iv } = data;
-  const key = await getKey(password);
-  return crypto.createDecipheriv(ALGORITHM, key, Buffer.from(iv));
+  constructor(secret: string) {
+    this.ready = new Promise(async (resolve, reject) => {
+      try {
+        const { password, iv } = secretToDecipherData(secret);
+        const key = await getKey(password);
+        this.stream = crypto.createDecipheriv(ALGORITHM, key, Buffer.from(iv));
+        return resolve();
+      } catch (err) {
+        return reject(err);
+      }
+    });
+  }
 }
