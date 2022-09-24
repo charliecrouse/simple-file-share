@@ -39,7 +39,7 @@
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.0",
-    "@types/bluebird": "^3.5.30",
+    "@types/bluebird": "3.5.37",
     "@types/body-parser": "^1.19.0",
     "@types/compression": "^1.7.0",
     "@types/cors": "^2.8.6",
